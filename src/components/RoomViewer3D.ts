@@ -9,7 +9,7 @@ const EYE_HEIGHT = 1.6;
 const PLAYER_RADIUS = 0.35;
 const MOVE_SPEED = 3.0;
 const MOUSE_SENSITIVITY = 0.002;
-const HOTSPOT_RADIUS = 0.22;
+const HOTSPOT_RADIUS = 0.3;
 
 export interface RoomViewerCallbacks {
   onHotspotClick: (hotspot: HotspotData) => void;
@@ -149,11 +149,11 @@ export class RoomViewer3D {
     this.orbit = new OrbitControls(this.camera, this.renderer.domElement);
     this.orbit.enableDamping = true;
     this.orbit.dampingFactor = 0.08;
-    this.orbit.target.set(0, 1.2, -3);
+    this.orbit.target.set(0, 0.5, -2.5);
     this.orbit.minDistance = 1;
-    this.orbit.maxDistance = 25;
-    this.orbit.maxPolarAngle = Math.PI / 2 - 0.05;
-    this.camera.position.set(5, 3.5, 4);
+    this.orbit.maxDistance = 30;
+    this.orbit.maxPolarAngle = Math.PI / 2 - 0.02;
+    this.camera.position.set(0, 9, 3);
     this.orbit.update();
   }
 
@@ -188,6 +188,12 @@ export class RoomViewer3D {
       if (obj instanceof THREE.Mesh) {
         obj.castShadow = true;
         obj.receiveShadow = true;
+        if (obj.name === 'ceiling') {
+          obj.visible = false;
+        }
+        if (obj.geometry && !obj.geometry.attributes.normal) {
+          obj.geometry.computeVertexNormals();
+        }
       }
     });
     this.scene?.add(this.modelRoot);
@@ -419,12 +425,17 @@ export class RoomViewer3D {
   }
 
   private addMeasurePoint(mp: MeasurePoint): void {
+    if (this.measurePoints.length >= 2) {
+      this.clearMeasure();
+    }
     this.measurePoints.push(mp);
     this.drawMeasureVisuals();
     if (this.measurePoints.length === 2) {
       const a = this.measurePoints[0].position;
       const b = this.measurePoints[1].position;
       this.callbacks.onMeasure(distanceInMeters(a, b, this.metersPerUnit));
+    } else {
+      this.callbacks.onMeasure(null);
     }
   }
 

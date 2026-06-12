@@ -6,17 +6,20 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = path.resolve(__dirname, '../public/models');
 const OUT_FILE = path.join(OUT_DIR, 'room.gltf');
 
+const WALL_T = 0.15;
+const FLOOR_T = 0.1;
+
 const room = {
   walls: [
-    { min: [-7, 0, -6], max: [7, 2.8, -6] },
-    { min: [-7, 0, 1], max: [7, 2.8, 1] },
-    { min: [-7, 0, -6], max: [-7, 2.8, 1] },
-    { min: [7, 0, -6], max: [7, 2.8, 1] },
-    { min: [-1.5, 0, -6], max: [-1.5, 2.2, -5.8], door: true },
-    { min: [2, 0, -6], max: [2, 2.2, -5.8], door: true }
+    { min: [-7, 0, -6 - WALL_T], max: [7, 2.8, -6] },
+    { min: [-7, 0, 1], max: [7, 2.8, 1 + WALL_T] },
+    { min: [-7 - WALL_T, 0, -6], max: [-7, 2.8, 1] },
+    { min: [7, 0, -6], max: [7 + WALL_T, 2.8, 1] },
+    { min: [-1.5, 0, -6 - WALL_T], max: [-1.5, 2.2, -6 + WALL_T * 0.2], door: true },
+    { min: [2, 0, -6 - WALL_T], max: [2, 2.2, -6 + WALL_T * 0.2], door: true }
   ],
-  floor: { min: [-7, 0, -6], max: [7, 0, 1] },
-  ceiling: { min: [-7, 2.8, -6], max: [7, 2.8, 1] },
+  floor: { min: [-7 - WALL_T, -FLOOR_T, -6 - WALL_T], max: [7 + WALL_T, 0, 1 + WALL_T] },
+  ceiling: { min: [-7 - WALL_T, 2.8, -6 - WALL_T], max: [7 + WALL_T, 2.8 + FLOOR_T, 1 + WALL_T] },
   furniture: [
     { id: 'fur-sofa-01', name: '沙发', min: [-1.5, 0, -2.5], max: [1.5, 0.9, -1.3], color: [0.75, 0.68, 0.6] },
     { id: 'fur-tv-01', name: '电视柜', min: [-1.8, 0.4, -5.7], max: [1.8, 1.2, -5.3], color: [0.35, 0.28, 0.22] },
