@@ -1,0 +1,46 @@
+{
+  "articles": [
+    {
+      "id": "art-001",
+      "title": "客厅收纳的 10 个隐形扩容技巧",
+      "summary": "从电视柜到沙发底，挖掘每 1 厘米的储物潜力。",
+      "category": "客厅",
+      "url": "#/article/art-001"
+    },
+    {
+      "id": "art-002",
+      "title": "电视柜设计避坑指南：线材、高度与收纳",
+      "summary": "一次搞定观影、游戏机、音响的完美布局。",
+      "category": "客厅",
+      "url": "#/article/art-002"
+    },
+    {
+      "id": "art-003",
+      "title": "厨房黄金动线：洗切炒盛的高效布局",
+      "summary": "操作效率提升 40% 的橱柜规划案例。",
+      "category": "厨房",
+      "url": "#/article/art-003"
+    },
+    {
+      "id": "art-004",
+      "title": "小户型客厅「显大」的 7 个视觉魔法",
+      "summary": "色彩、家具尺寸与镜面的组合应用。",
+      "category": "客厅",
+      "url": "#/article/art-004"
+    },
+    {
+      "id": "art-005",
+      "title": "卧室衣柜分区方法论：四季衣物一轮收纳",
+      "summary": "让你每天早上少花 10 分钟找衣服。",
+      "category": "卧室",
+      "url": "#/article/art-005"
+    },
+    {
+      "id": "art-006",
+      "title": "床头柜的极简美学：只留 3 件物品",
+      "summary": "睡前仪式感与收纳效率的平衡。",
+      "category": "卧室",
+      "url": "#/article/art-006"
+    }
+  ]
+}

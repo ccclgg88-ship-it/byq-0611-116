@@ -1,0 +1,131 @@
+{
+  "metersPerUnit": 1.0,
+  "hotspots": [
+    {
+      "id": "hs-living-sofa",
+      "room": "客厅",
+      "position": [0, 0.8, -2],
+      "normal": [0, 1, 0],
+      "furnitureId": "fur-sofa-01",
+      "furnitureName": "三人布艺沙发",
+      "tips": [
+        "沙发底部留空 ≥15cm，便于扫地机器人通行",
+        "抱枕按 2:1:2 比例摆放，视觉平衡且方便取用",
+        "沙发与电视墙间距建议 2.5~3.5 米（按屏幕尺寸调整）"
+      ],
+      "articleIds": ["art-001", "art-004"]
+    },
+    {
+      "id": "hs-living-tv",
+      "room": "客厅",
+      "position": [0, 1.2, -5.5],
+      "normal": [0, 0, 1],
+      "furnitureId": "fur-tv-01",
+      "furnitureName": "电视柜组合",
+      "tips": [
+        "电视柜高度以观看时视线平齐屏幕中心为标准（约 70~90cm）",
+        "线缆走背线或用理线盒，保持视觉整洁",
+        "开放格收纳常用设备，封闭柜藏影音线材与碟片"
+      ],
+      "articleIds": ["art-002", "art-004"]
+    },
+    {
+      "id": "hs-living-coffee",
+      "room": "客厅",
+      "position": [0, 0.3, -3.5],
+      "normal": [0, 1, 0],
+      "furnitureId": "fur-coffee-01",
+      "furnitureName": "圆形茶几",
+      "tips": [
+        "茶几与沙发间距预留 40~50cm，方便起坐动线",
+        "下层托盘收纳遥控器/杂志，上层只放花艺与水杯",
+        "圆角设计适合有儿童的家庭，避免磕碰"
+      ],
+      "articleIds": ["art-001"]
+    },
+    {
+      "id": "hs-kitchen-counter",
+      "room": "厨房",
+      "position": [4.5, 0.9, -2],
+      "normal": [-1, 0, 0],
+      "furnitureId": "fur-kitchen-01",
+      "furnitureName": "L 型橱柜操作台",
+      "tips": [
+        "按冰箱→水槽→灶台的黄金三角布局，动线 ≤6 米",
+        "吊柜下装感应灯带，切菜区无手影",
+        "台面高度 = 身高/2 + 5cm，长期备菜不累腰"
+      ],
+      "articleIds": ["art-003"]
+    },
+    {
+      "id": "hs-kitchen-fridge",
+      "room": "厨房",
+      "position": [6.2, 1.2, -0.5],
+      "normal": [-1, 0, 0],
+      "furnitureId": "fur-fridge-01",
+      "furnitureName": "嵌入式双门冰箱",
+      "tips": [
+        "冰箱两侧各留 ≥5cm 散热空间，底部留空通风",
+        "生熟分区：上层熟食/饮料，中层生鲜，下层冷冻",
+        "门体搁架只放耐温调味品，避免压缩机直吹变质"
+      ],
+      "articleIds": ["art-003"]
+    },
+    {
+      "id": "hs-bedroom-bed",
+      "room": "卧室",
+      "position": [-4.5, 0.5, -2.5],
+      "normal": [0, 0, 1],
+      "furnitureId": "fur-bed-01",
+      "furnitureName": "1.8 米布艺床架",
+      "tips": [
+        "床架离地 ≥30cm 或用箱体床，换季被褥床下收纳",
+        "床头两侧各留 ≥60cm 过道，铺床与起夜不拥挤",
+        "床垫厚度 22~28cm 为宜，与床头板上沿落差 <10cm"
+      ],
+      "articleIds": ["art-005"]
+    },
+    {
+      "id": "hs-bedroom-wardrobe",
+      "room": "卧室",
+      "position": [-6.2, 1.8, -2.5],
+      "normal": [1, 0, 0],
+      "furnitureId": "fur-wardrobe-01",
+      "furnitureName": "通顶衣柜",
+      "tips": [
+        "分区：长衣区 120cm+、短衣区 90cm、叠放区 35cm/格、抽屉 20cm",
+        "挂衣杆深度 ≥60cm，避免门板夹衣角",
+        "顶部不常用区放行李箱/棉被，用真空袋压缩省空间"
+      ],
+      "articleIds": ["art-005", "art-006"]
+    },
+    {
+      "id": "hs-bedroom-nightstand",
+      "room": "卧室",
+      "position": [-3.2, 0.55, -1.5],
+      "normal": [0, 0, -1],
+      "furnitureId": "fur-nightstand-01",
+      "furnitureName": "双抽屉床头柜",
+      "tips": [
+        "上层抽屉放手机/眼镜/助眠用品，下层放私密物品",
+        "台面留足台灯/香薰空间，高度比床垫上沿高 5~10cm",
+        "床头柜与床之间留 2~3cm 缝隙，避免打扫死角"
+      ],
+      "articleIds": ["art-006"]
+    },
+    {
+      "id": "hs-living-bookshelf",
+      "room": "客厅",
+      "position": [2.8, 1.5, -5],
+      "normal": [-1, 0, 0],
+      "furnitureId": "fur-bookshelf-01",
+      "furnitureName": "开放式书架",
+      "tips": [
+        "书籍按使用频率：常用平视层、次常用下层、收藏上层",
+        "每 3~4 层做一个装饰层（摆件/绿植），避免视觉压迫",
+        "层板承重 ≥15kg，装满书也不下弯"
+      ],
+      "articleIds": ["art-002"]
+    }
+  ]
+}

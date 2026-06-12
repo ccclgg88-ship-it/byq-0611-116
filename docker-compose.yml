@@ -1,0 +1,8 @@
+services:
+  room-viewer:
+    build: .
+    image: room-viewer-3d:latest
+    container_name: room-viewer-3d
+    ports:
+      - "8080:80"
+    restart: unless-stopped
