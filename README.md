@@ -50,19 +50,24 @@ Nginx 已配置 glTF/glb 的 MIME 类型 `model/gltf+json` 与 gzip 压缩。
 │   ├── models/
 │   │   └── room.gltf              # 由 generate-gltf.mjs 生成的简化户型
 │   ├── room-hotspots.json         # 热点定义（9 个热点，覆盖 3 房间）
-│   └── mock-articles.json         # 生活百科 Mock 文章
+│   ├── mock-articles.json         # 生活百科 Mock 文章
+│   └── tour-routes.json           # 智能导览路线（3 条路线：全屋速览 / 客厅收纳动线 / 厨房黄金三角）
 ├── scripts/
 │   └── generate-gltf.mjs          # glTF 程序化生成脚本
 ├── docs/
 │   └── hotspot-schema.md          # 热点 JSON Schema 文档
 ├── src/
 │   ├── components/
-│   │   ├── RoomViewer3D.ts        # Three.js 3D 场景主控制器
+│   │   ├── RoomViewer3D.ts        # Three.js 3D 场景主控制器（含 startTourStep / stopTour / 热点高亮）
 │   │   ├── HotspotPanel.ts        # 侧栏热点详情面板
-│   │   └── FloorPlanFallback.ts   # WebGL 不可用时的平面图降级视图
+│   │   ├── FloorPlanFallback.ts   # WebGL 不可用时的平面图降级视图（含导览路线绘制）
+│   │   ├── TourController.ts      # 导览状态机（播放 / 暂停 / 上一步 / 下一步 / 进度）
+│   │   └── TourPanel.ts           # 导览 UI：路线列表 + 播放控件 + 进度显示
 │   ├── utils/
 │   │   ├── measure.ts             # 测距核心函数 + formatMeters
-│   │   ├── measure.test.ts        # ≥ 11 个单测用例
+│   │   ├── measure.test.ts        # 11 个测距相关单测
+│   │   ├── tour.ts                # 相机弧线插值、缓动函数、路线校验工具
+│   │   ├── tour.test.ts           # 28 个导览工具相关单测
 │   │   ├── collision.ts           # AABB 碰撞检测与墙体解算
 │   │   └── webgl.ts               # WebGL 能力检测
 │   ├── types.ts                   # 共享 TS 类型

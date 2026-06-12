@@ -39,3 +39,34 @@ export interface MeasurePoint {
   screenX: number;
   screenY: number;
 }
+
+export interface TourStep {
+  id: string;
+  hotspotId: string;
+  narration: string;
+  cameraPosition: [number, number, number];
+  cameraTarget: [number, number, number];
+  durationMs?: number;
+}
+
+export interface TourRoute {
+  id: string;
+  name: string;
+  summary: string;
+  icon: string;
+  steps: TourStep[];
+}
+
+export interface TourRoutesFile {
+  routes: TourRoute[];
+}
+
+export type TourState = 'idle' | 'playing' | 'paused' | 'transitioning' | 'ended';
+
+export interface TourStatus {
+  state: TourState;
+  routeId: string | null;
+  stepIndex: number;
+  totalSteps: number;
+  progress: number;
+}

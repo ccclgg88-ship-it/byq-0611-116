@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import type { HotspotData, HotspotsFile, ControlMode, MeasurePoint, Vec3 } from '../types';
+import type { HotspotData, HotspotsFile, ControlMode, MeasurePoint, Vec3, TourStep } from '../types';
 import { distanceInMeters, formatMeters, midpoint } from '../utils/measure';
 import { extractAABBsFromObject, resolveAABBCollision, type AABB } from '../utils/collision';
+import { interpolateCameraPath, easeInOutCubic } from '../utils/tour';
 
 const EYE_HEIGHT = 1.6;
 const PLAYER_RADIUS = 0.35;
@@ -50,6 +51,16 @@ export class RoomViewer3D {
 
   private measurePoints: MeasurePoint[] = [];
   private measuring = false;
+
+  private tourActive = false;
+  private tourFromPos: Vec3 = { x: 0, y: 0, z: 0 };
+  private tourFromTarget: Vec3 = { x: 0, y: 0, z: 0 };
+  private tourToPos: Vec3 = { x: 0, y: 0, z: 0 };
+  private tourToTarget: Vec3 = { x: 0, y: 0, z: 0 };
+  private tourDuration = 4000;
+  private tourElapsed = 0;
+  private tourHighlightId: string | null = null;
+  private tourHighlightRing: THREE.Mesh | null = null;
 
   private rafId = 0;
   private resizeObserver: ResizeObserver | null = null;
@@ -536,6 +547,28 @@ export class RoomViewer3D {
   }
 
   private update(dt: number): void {
+    if (this.tourActive && this.camera) {
+      this.tourElapsed += dt * 1000;
+      const rawT = Math.min(1, this.tourElapsed / this.tourDuration);
+      const pose = interpolateCameraPath(
+        this.tourFromPos,
+        this.tourFromTarget,
+        this.tourToPos,
+        this.tourToTarget,
+        rawT,
+        easeInOutCubic
+      );
+      this.camera.position.set(pose.position.x, pose.position.y, pose.position.z);
+      if (this.orbit) {
+        this.orbit.target.set(pose.target.x, pose.target.y, pose.target.z);
+        this.orbit.update();
+      } else {
+        this.camera.lookAt(pose.target.x, pose.target.y, pose.target.z);
+      }
+      this.animateHotspots();
+      return;
+    }
+
     if (this.mode === 'orbit') {
       this.orbit?.update();
       this.animateHotspots();
@@ -579,12 +612,105 @@ export class RoomViewer3D {
     if (!this.hotspotGroup) return;
     const t = performance.now() * 0.003;
     this.hotspotGroup.children.forEach((child, i) => {
-      if (child instanceof THREE.Mesh) {
-        const s = 1 + Math.sin(t + i) * 0.08;
-        child.scale.setScalar(s);
-        child.lookAt(this.camera?.position ?? new THREE.Vector3());
+      if (!(child instanceof THREE.Mesh)) return;
+      const id = child.userData.hotspotId as string;
+      const isHighlight = id === this.tourHighlightId;
+      const base = isHighlight ? 1.7 : 1;
+      const s = base + Math.sin(t + i) * (isHighlight ? 0.2 : 0.08);
+      child.scale.setScalar(s);
+      child.lookAt(this.camera?.position ?? new THREE.Vector3());
+      const mat = child.material as THREE.MeshBasicMaterial;
+      if (isHighlight) {
+        mat.color.setHex(0xffffff);
+        mat.opacity = 1;
+      } else {
+        if (this.tourActive) {
+          mat.color.setHex(0xd98c6a);
+          mat.opacity = 0.35;
+        } else {
+          mat.color.setHex(0xff6a3d);
+          mat.opacity = 0.85;
+        }
       }
     });
+    if (this.tourHighlightRing && this.camera) {
+      const s = 1 + Math.sin(t * 1.5) * 0.15;
+      this.tourHighlightRing.scale.setScalar(s);
+      this.tourHighlightRing.lookAt(this.camera.position);
+    }
+  }
+
+  startTourStep(step: TourStep): void {
+    if (!this.camera || !this.scene) return;
+    this.setControlMode('orbit');
+    this.toggleMeasureMode(false);
+    document.exitPointerLock?.();
+
+    this.tourFromPos = {
+      x: this.camera.position.x,
+      y: this.camera.position.y,
+      z: this.camera.position.z
+    };
+    const tgt = this.orbit?.target ?? new THREE.Vector3();
+    this.tourFromTarget = { x: tgt.x, y: tgt.y, z: tgt.z };
+    this.tourToPos = {
+      x: step.cameraPosition[0],
+      y: step.cameraPosition[1],
+      z: step.cameraPosition[2]
+    };
+    this.tourToTarget = {
+      x: step.cameraTarget[0],
+      y: step.cameraTarget[1],
+      z: step.cameraTarget[2]
+    };
+    this.tourDuration = step.durationMs ?? 4000;
+    this.tourElapsed = 0;
+    this.tourActive = true;
+    this.highlightHotspot(step.hotspotId);
+  }
+
+  private highlightHotspot(hotspotId: string): void {
+    if (!this.scene) return;
+    this.clearTourHighlight();
+    this.tourHighlightId = hotspotId;
+    const data = this.hotspots.find((h) => h.id === hotspotId);
+    if (!data) return;
+    const ringGeo = new THREE.RingGeometry(HOTSPOT_RADIUS * 1.5, HOTSPOT_RADIUS * 2.3, 48);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0xffcc66,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.85,
+      depthTest: false
+    });
+    this.tourHighlightRing = new THREE.Mesh(ringGeo, ringMat);
+    this.tourHighlightRing.position.set(data.position[0], data.position[1], data.position[2]);
+    this.scene.add(this.tourHighlightRing);
+  }
+
+  private clearTourHighlight(): void {
+    this.tourHighlightId = null;
+    if (this.tourHighlightRing && this.scene) {
+      this.scene.remove(this.tourHighlightRing);
+      this.tourHighlightRing.geometry.dispose();
+      (this.tourHighlightRing.material as THREE.Material).dispose();
+      this.tourHighlightRing = null;
+    }
+  }
+
+  stopTour(): void {
+    this.tourActive = false;
+    this.tourElapsed = 0;
+    this.clearTourHighlight();
+  }
+
+  isTourActive(): boolean {
+    return this.tourActive;
+  }
+
+  getTourProgress(): number {
+    if (!this.tourActive || this.tourDuration <= 0) return 1;
+    return Math.min(1, this.tourElapsed / this.tourDuration);
   }
 
   dispose(): void {

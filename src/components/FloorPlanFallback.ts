@@ -1,4 +1,4 @@
-import type { ArticleData, HotspotData } from '../types';
+import type { ArticleData, HotspotData, TourStep } from '../types';
 
 export interface FloorPlanFallbackCallbacks {
   onHotspotClick: (hotspot: HotspotData) => void;
@@ -23,6 +23,10 @@ export class FloorPlanFallback {
   private callbacks: FloorPlanFallbackCallbacks;
   private articlesMap: Map<string, ArticleData> = new Map();
   private groups: RoomGroup[] = [];
+  private allHotspots: HotspotData[] = [];
+  private tourPathG: SVGGElement | null = null;
+  private tourMarkers: Map<string, SVGElement> = new Map();
+  private activeTourSteps: TourStep[] = [];
 
   constructor(_container: HTMLElement, callbacks: FloorPlanFallbackCallbacks) {
     this.callbacks = callbacks;
@@ -55,6 +59,7 @@ export class FloorPlanFallback {
   }
 
   setHotspots(hotspots: HotspotData[]): void {
+    this.allHotspots = hotspots;
     const grouped = new Map<string, HotspotData[]>();
     for (const hs of hotspots) {
       if (!grouped.has(hs.room)) grouped.set(hs.room, []);
@@ -118,38 +123,6 @@ export class FloorPlanFallback {
       rect.setAttribute('height', String(w.h));
       rect.setAttribute('fill', '#5a4d3d');
       this.planSvg.appendChild(rect);
-    }
-  }
-
-  private drawHotspots(hotspots: HotspotData[]): void {
-    const NS = 'http://www.w3.org/2000/svg';
-    for (const hs of hotspots) {
-      const g = document.createElementNS(NS, 'g');
-      g.style.cursor = 'pointer';
-      g.setAttribute('transform', `translate(${hs.position[0]}, ${-hs.position[2] - 2.5})`);
-
-      const circle = document.createElementNS(NS, 'circle');
-      circle.setAttribute('r', '0.25');
-      circle.setAttribute('fill', '#ff6a3d');
-      circle.setAttribute('stroke', '#fff');
-      circle.setAttribute('stroke-width', '0.05');
-
-      const label = document.createElementNS(NS, 'text');
-      label.setAttribute('y', '-0.4');
-      label.setAttribute('text-anchor', 'middle');
-      label.setAttribute('font-size', '0.25');
-      label.setAttribute('fill', '#333');
-      label.setAttribute('font-weight', '600');
-      label.textContent = hs.furnitureName;
-
-      g.appendChild(circle);
-      g.appendChild(label);
-
-      g.addEventListener('click', () => this.callbacks.onHotspotClick(hs));
-      g.addEventListener('mouseenter', () => circle.setAttribute('fill', '#ff8a5d'));
-      g.addEventListener('mouseleave', () => circle.setAttribute('fill', '#ff6a3d'));
-
-      this.planSvg.appendChild(g);
     }
   }
 
@@ -224,6 +197,163 @@ export class FloorPlanFallback {
       item.appendChild(body);
       this.listRoot.appendChild(item);
     }
+  }
+
+  private drawHotspots(hotspots: HotspotData[]): void {
+    const NS = 'http://www.w3.org/2000/svg';
+    this.tourMarkers.clear();
+    for (const hs of hotspots) {
+      const g = document.createElementNS(NS, 'g');
+      g.style.cursor = 'pointer';
+      g.setAttribute('transform', `translate(${hs.position[0]}, ${-hs.position[2] - 2.5})`);
+
+      const circle = document.createElementNS(NS, 'circle');
+      circle.setAttribute('r', '0.25');
+      circle.setAttribute('fill', '#ff6a3d');
+      circle.setAttribute('stroke', '#fff');
+      circle.setAttribute('stroke-width', '0.05');
+      circle.dataset.hotspotId = hs.id;
+
+      const label = document.createElementNS(NS, 'text');
+      label.setAttribute('y', '-0.4');
+      label.setAttribute('text-anchor', 'middle');
+      label.setAttribute('font-size', '0.25');
+      label.setAttribute('fill', '#333');
+      label.setAttribute('font-weight', '600');
+      label.textContent = hs.furnitureName;
+
+      g.appendChild(circle);
+      g.appendChild(label);
+
+      g.addEventListener('click', () => this.callbacks.onHotspotClick(hs));
+      g.addEventListener('mouseenter', () => {
+        if (circle.dataset.isActive !== '1') circle.setAttribute('fill', '#ff8a5d');
+      });
+      g.addEventListener('mouseleave', () => {
+        if (circle.dataset.isActive !== '1' && circle.dataset.isDone !== '1') {
+          circle.setAttribute('fill', this.activeTourSteps.length ? '#d98c6a' : '#ff6a3d');
+        }
+      });
+
+      this.planSvg.appendChild(g);
+      this.tourMarkers.set(hs.id, circle);
+    }
+  }
+
+  setActiveTourRoute(steps: TourStep[]): void {
+    this.clearActiveTourRoute();
+    this.activeTourSteps = steps;
+    if (!steps.length) return;
+
+    const NS = 'http://www.w3.org/2000/svg';
+    const g = document.createElementNS(NS, 'g');
+    g.setAttribute('class', 'floorplan__tour-path');
+
+    const points = steps.map((s) => {
+      const hs = this.allHotspots.find((h) => h.id === s.hotspotId);
+      if (!hs) return null;
+      return { x: hs.position[0], y: -hs.position[2] - 2.5 };
+    }).filter((p): p is { x: number; y: number } => p !== null);
+
+    if (points.length >= 2) {
+      const d = points.map((p, i) => (i === 0 ? 'M' : 'L') + p.x.toFixed(3) + ' ' + p.y.toFixed(3)).join(' ');
+      const line = document.createElementNS(NS, 'path');
+      line.setAttribute('d', d);
+      line.setAttribute('stroke', '#f59e0b');
+      line.setAttribute('stroke-width', '0.12');
+      line.setAttribute('fill', 'none');
+      line.setAttribute('stroke-dasharray', '0.3 0.15');
+      line.setAttribute('stroke-linecap', 'round');
+      g.appendChild(line);
+
+      for (let i = 0; i < points.length - 1; i++) {
+        const a = points[i];
+        const b = points[i + 1];
+        const angle = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+        const mx = (a.x + b.x) / 2;
+        const my = (a.y + b.y) / 2;
+        const arrow = document.createElementNS(NS, 'polygon');
+        arrow.setAttribute('points', '0.18,0 -0.09,-0.1 -0.09,0.1');
+        arrow.setAttribute('transform', `translate(${mx.toFixed(3)} ${my.toFixed(3)}) rotate(${angle.toFixed(1)})`);
+        arrow.setAttribute('fill', '#f59e0b');
+        g.appendChild(arrow);
+      }
+    }
+
+    for (let i = 0; i < steps.length; i++) {
+      const hs = this.allHotspots.find((h) => h.id === steps[i].hotspotId);
+      const circle = hs ? this.tourMarkers.get(hs.id) : null;
+      if (!circle) continue;
+      circle.setAttribute('fill', '#d98c6a');
+      circle.setAttribute('r', '0.3');
+
+      const lbl = document.createElementNS(NS, 'text');
+      const hs2 = this.allHotspots.find((h) => h.id === steps[i].hotspotId)!;
+      lbl.setAttribute('x', String(hs2.position[0]));
+      lbl.setAttribute('y', String(-hs2.position[2] - 2.5));
+      lbl.setAttribute('text-anchor', 'middle');
+      lbl.setAttribute('dominant-baseline', 'middle');
+      lbl.setAttribute('font-size', '0.28');
+      lbl.setAttribute('font-weight', '700');
+      lbl.setAttribute('fill', '#fff');
+      lbl.textContent = String(i + 1);
+      g.appendChild(lbl);
+    }
+
+    this.planSvg.appendChild(g);
+    this.tourPathG = g;
+  }
+
+  setActiveStepIndex(index: number): void {
+    this.tourMarkers.forEach((circle, id) => {
+      const stepIdx = this.activeTourSteps.findIndex((s) => s.hotspotId === id);
+      if (stepIdx < 0) {
+        circle.removeAttribute('data-is-active');
+        circle.removeAttribute('data-is-done');
+        circle.setAttribute('fill', this.activeTourSteps.length ? '#d98c6a' : '#ff6a3d');
+        circle.setAttribute('r', '0.25');
+        return;
+      }
+      if (stepIdx === index) {
+        circle.dataset.isActive = '1';
+        circle.removeAttribute('data-is-done');
+        circle.setAttribute('fill', '#ffffff');
+        circle.setAttribute('stroke', '#f59e0b');
+        circle.setAttribute('stroke-width', '0.1');
+        circle.setAttribute('r', '0.42');
+      } else if (stepIdx < index) {
+        circle.removeAttribute('data-is-active');
+        circle.dataset.isDone = '1';
+        circle.setAttribute('fill', '#10b981');
+        circle.setAttribute('stroke', '#fff');
+        circle.setAttribute('stroke-width', '0.05');
+        circle.setAttribute('r', '0.3');
+      } else {
+        circle.removeAttribute('data-is-active');
+        circle.removeAttribute('data-is-done');
+        circle.setAttribute('fill', '#d98c6a');
+        circle.setAttribute('stroke', '#fff');
+        circle.setAttribute('stroke-width', '0.05');
+        circle.setAttribute('r', '0.3');
+      }
+    });
+  }
+
+  clearActiveTourRoute(): void {
+    this.activeTourSteps = [];
+    if (this.tourPathG) {
+      this.tourPathG.remove();
+      this.tourPathG = null;
+    }
+    this.tourMarkers.forEach((circle, id) => {
+      circle.removeAttribute('data-is-active');
+      circle.removeAttribute('data-is-done');
+      circle.setAttribute('fill', '#ff6a3d');
+      circle.setAttribute('stroke', '#fff');
+      circle.setAttribute('stroke-width', '0.05');
+      circle.setAttribute('r', '0.25');
+      void id;
+    });
   }
 
   dispose(): void {

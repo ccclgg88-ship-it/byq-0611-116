@@ -1,13 +1,26 @@
 import { RoomViewer3D } from './components/RoomViewer3D';
 import { HotspotPanel } from './components/HotspotPanel';
 import { FloorPlanFallback } from './components/FloorPlanFallback';
+import { TourController } from './components/TourController';
+import { TourPanel } from './components/TourPanel';
 import { isWebGLSupported } from './utils/webgl';
 import { formatMeters } from './utils/measure';
-import type { ArticleData, ArticlesFile, ControlMode, HotspotData, HotspotsFile } from './types';
+import type {
+  ArticleData,
+  ArticlesFile,
+  ControlMode,
+  HotspotData,
+  HotspotsFile,
+  TourRoute,
+  TourRoutesFile,
+  TourStatus,
+  TourStep
+} from './types';
 
 const GLTF_URL = '/models/room.gltf';
 const HOTSPOTS_URL = '/room-hotspots.json';
 const ARTICLES_URL = '/mock-articles.json';
+const TOUR_URL = '/tour-routes.json';
 
 export class App {
   private root: HTMLElement;
@@ -16,14 +29,20 @@ export class App {
   private measureBadge: HTMLElement;
   private errorToast: HTMLElement;
   private loading: HTMLElement;
+  private leftPanel: HTMLElement;
+  private rightPanel: HTMLElement;
 
   private viewer: RoomViewer3D | null = null;
   private panel: HotspotPanel | null = null;
   private fallback: FloorPlanFallback | null = null;
+  private tourController: TourController | null = null;
+  private tourPanel: TourPanel | null = null;
 
   private articles: ArticleData[] = [];
   private hotspots: HotspotData[] = [];
+  private routes: TourRoute[] = [];
   private measureMode = false;
+  private tourInProgress = false;
 
   constructor(root: HTMLElement) {
     this.root = root;
@@ -35,6 +54,7 @@ export class App {
         <div class="app__toolbar"></div>
       </header>
       <div class="app__main">
+        <div class="app__left-panel"></div>
         <div class="app__viewer-wrap">
           <div class="app__loading">加载户型模型中…</div>
           <div class="app__error-toast" style="display:none"></div>
@@ -50,6 +70,8 @@ export class App {
     this.measureBadge = this.root.querySelector('.app__measure-badge') as HTMLElement;
     this.errorToast = this.root.querySelector('.app__error-toast') as HTMLElement;
     this.loading = this.root.querySelector('.app__loading') as HTMLElement;
+    this.leftPanel = this.root.querySelector('.app__left-panel') as HTMLElement;
+    this.rightPanel = this.root.querySelector('.app__panel') as HTMLElement;
 
     this.buildToolbar();
   }
@@ -61,17 +83,21 @@ export class App {
     const btnShot = this.mkBtn('shot', '📸 截图导出', false);
 
     btnOrbit.addEventListener('click', () => {
+      if (this.tourInProgress) return;
       this.setMeasureMode(false);
       this.viewer?.setControlMode('orbit');
     });
     btnWads.addEventListener('click', () => {
+      if (this.tourInProgress) return;
       this.setMeasureMode(false);
       this.viewer?.setControlMode('wads');
     });
     btnMeasure.addEventListener('click', () => {
+      if (this.tourInProgress) return;
       this.setMeasureMode(!this.measureMode);
     });
     btnShot.addEventListener('click', () => {
+      if (this.tourInProgress) return;
       this.viewer?.exportScreenshot(`room-${Date.now()}.png`);
     });
 
@@ -95,6 +121,16 @@ export class App {
     if (b) b.classList.toggle('is-active', active);
   }
 
+  private setToolbarTourDisabled(disabled: boolean): void {
+    this.tourInProgress = disabled;
+    for (const id of ['orbit', 'wads', 'measure', 'shot']) {
+      const b = this.toolbar.querySelector(`.app__btn--${id}`) as HTMLButtonElement | null;
+      if (b) b.classList.toggle('is-disabled', disabled);
+    }
+    const hint = this.toolbar.querySelector('.app__hint') as HTMLElement | null;
+    if (hint) hint.style.opacity = disabled ? '0.4' : '1';
+  }
+
   private setMeasureMode(enabled: boolean): void {
     this.measureMode = enabled;
     this.setButtonActive('measure', enabled);
@@ -112,14 +148,31 @@ export class App {
     try {
       await this.loadStaticData();
     } catch (err) {
-      this.showError('热点或文章数据加载失败：' + (err instanceof Error ? err.message : String(err)));
+      this.showError('静态数据加载失败：' + (err instanceof Error ? err.message : String(err)));
       this.hotspots = [];
       this.articles = [];
+      this.routes = [];
     }
 
-    this.panel = new HotspotPanel(this.root.querySelector('.app__panel') as HTMLElement);
+    this.panel = new HotspotPanel(this.rightPanel);
     this.panel.setArticles(this.articles);
     this.panel.onClose(() => this.setMeasureMode(this.measureMode));
+
+    this.tourController = new TourController({
+      onStatusChange: (s) => this.onTourStatusChange(s),
+      onStepChange: (step, route) => this.onTourStepChange(step, route),
+      onEnd: () => this.onTourEnd()
+    });
+
+    this.tourPanel = new TourPanel(this.leftPanel, {
+      onSelectRoute: (route) => this.onSelectRoute(route),
+      onPlayPause: () => this.tourController?.togglePause(),
+      onPrev: () => this.tourController?.prevStep(),
+      onNext: () => this.tourController?.nextStep(),
+      onStop: () => this.onTourStop(),
+      onGotoStep: (idx) => this.tourController?.goToStep(idx)
+    });
+    this.tourPanel.setRoutes(this.routes);
 
     if (!isWebGLSupported()) {
       this.loading.style.display = 'none';
@@ -154,6 +207,48 @@ export class App {
     }
   }
 
+  private onSelectRoute(route: TourRoute): void {
+    if (!this.tourController) return;
+    this.setToolbarTourDisabled(true);
+    this.setMeasureMode(false);
+    this.tourPanel?.showActivePanel(route);
+    this.fallback?.setActiveTourRoute(route.steps);
+    this.tourController.start(route);
+  }
+
+  private onTourStatusChange(status: TourStatus): void {
+    this.tourPanel?.updateStatus(status);
+  }
+
+  private onTourStepChange(step: TourStep, _route: TourRoute): void {
+    const hs = this.hotspots.find((h) => h.id === step.hotspotId);
+    this.tourPanel?.setNarration(step.narration);
+    if (this.viewer) {
+      this.viewer.startTourStep(step);
+    }
+    if (this.fallback) {
+      const idx = _route.steps.findIndex((s) => s.id === step.id);
+      this.fallback.setActiveStepIndex(idx >= 0 ? idx : 0);
+    }
+    if (hs) this.panel?.show(hs);
+  }
+
+  private onTourStop(): void {
+    this.tourController?.stop();
+    this.viewer?.stopTour();
+    this.fallback?.clearActiveTourRoute();
+    this.tourPanel?.hideActivePanel();
+    this.setToolbarTourDisabled(false);
+  }
+
+  private onTourEnd(): void {
+    this.viewer?.stopTour();
+    this.setToolbarTourDisabled(false);
+    this.tourPanel?.updateStatus(this.tourController?.getStatus() ?? {
+      state: 'ended', routeId: null, stepIndex: 0, totalSteps: 0, progress: 1
+    });
+  }
+
   private mountFallback(): void {
     this.fallback = new FloorPlanFallback(this.viewer3dWrap, {
       onHotspotClick: (hs) => this.panel?.show(hs)
@@ -169,7 +264,7 @@ export class App {
   }
 
   private async loadStaticData(): Promise<void> {
-    const [hs, arts] = await Promise.all([
+    const [hs, arts, tr] = await Promise.all([
       fetch(HOTSPOTS_URL).then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json() as Promise<HotspotsFile>;
@@ -177,10 +272,15 @@ export class App {
       fetch(ARTICLES_URL).then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json() as Promise<ArticlesFile>;
+      }),
+      fetch(TOUR_URL).then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json() as Promise<TourRoutesFile>;
       })
     ]);
     this.hotspots = hs.hotspots;
     this.articles = arts.articles;
+    this.routes = tr.routes;
   }
 
   private showError(msg: string): void {
@@ -195,6 +295,8 @@ export class App {
     this.viewer?.dispose();
     this.panel?.dispose();
     this.fallback?.dispose();
+    this.tourPanel?.dispose();
+    this.tourController?.stop();
     this.root.innerHTML = '';
   }
 }

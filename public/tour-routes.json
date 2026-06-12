@@ -1,0 +1,148 @@
+{
+  "routes": [
+    {
+      "id": "tour-full-house",
+      "name": "全屋速览",
+      "summary": "90 秒快速了解全部房间的收纳亮点与动线逻辑。",
+      "icon": "🏠",
+      "steps": [
+        {
+          "id": "step-1",
+          "hotspotId": "hs-living-tv",
+          "narration": "欢迎来到这套户型！我们先从客厅开始——电视柜是视听中心，高度与收纳都有讲究。",
+          "cameraPosition": [3, 3, -2],
+          "cameraTarget": [0, 1.2, -5.5],
+          "durationMs": 3500
+        },
+        {
+          "id": "step-2",
+          "hotspotId": "hs-living-sofa",
+          "narration": "对面就是三人布艺沙发，底部留空方便扫地机器人，抱枕比例也有讲究。",
+          "cameraPosition": [2, 2.5, 0.5],
+          "cameraTarget": [0, 0.8, -2],
+          "durationMs": 3500
+        },
+        {
+          "id": "step-3",
+          "hotspotId": "hs-living-coffee",
+          "narration": "中间的圆形茶几连接起沙发与电视墙，动线和收纳都不容忽视。",
+          "cameraPosition": [2.5, 2, -1.5],
+          "cameraTarget": [0, 0.3, -3.5],
+          "durationMs": 3000
+        },
+        {
+          "id": "step-4",
+          "hotspotId": "hs-living-bookshelf",
+          "narration": "客厅角落的开放式书架，兼具展示与藏书功能，按使用频率分层。",
+          "cameraPosition": [4, 2.5, -3],
+          "cameraTarget": [2.8, 1.5, -5],
+          "durationMs": 3000
+        },
+        {
+          "id": "step-5",
+          "hotspotId": "hs-kitchen-counter",
+          "narration": "接下来进入厨房区域，L 型橱柜按照洗-切-炒的黄金动线布局。",
+          "cameraPosition": [2.5, 2.2, 0],
+          "cameraTarget": [4.5, 0.9, -2],
+          "durationMs": 3500
+        },
+        {
+          "id": "step-6",
+          "hotspotId": "hs-kitchen-fridge",
+          "narration": "冰箱是动线起点，嵌入橱柜要留足散热空间，内部分区也有技巧。",
+          "cameraPosition": [4, 2, 1.5],
+          "cameraTarget": [6.2, 1.2, -0.5],
+          "durationMs": 3000
+        },
+        {
+          "id": "step-7",
+          "hotspotId": "hs-bedroom-bed",
+          "narration": "最后来到卧室，1.8 米布艺床架兼顾舒适度与床下收纳。",
+          "cameraPosition": [-2, 2.5, 0],
+          "cameraTarget": [-4.5, 0.5, -2.5],
+          "durationMs": 3500
+        },
+        {
+          "id": "step-8",
+          "hotspotId": "hs-bedroom-wardrobe",
+          "narration": "通顶衣柜是卧室收纳主力，按衣物长度和使用频率分区最实用。",
+          "cameraPosition": [-3, 2.5, -0.5],
+          "cameraTarget": [-6.2, 1.8, -2.5],
+          "durationMs": 3500
+        }
+      ]
+    },
+    {
+      "id": "tour-living-storage",
+      "name": "客厅收纳动线",
+      "summary": "聚焦客厅：沙发、茶几、电视柜、书架的收纳与动线协同。",
+      "icon": "🛋️",
+      "steps": [
+        {
+          "id": "step-ls-1",
+          "hotspotId": "hs-living-tv",
+          "narration": "客厅动线起点：电视柜高度 = 视线平齐屏幕中心，线材藏而不露。",
+          "cameraPosition": [3, 3, -2],
+          "cameraTarget": [0, 1.2, -5.5],
+          "durationMs": 4000
+        },
+        {
+          "id": "step-ls-2",
+          "hotspotId": "hs-living-coffee",
+          "narration": "茶几是客厅枢纽：与沙发间距 40~50cm，下层托盘藏杂物，上层只留花艺与水杯。",
+          "cameraPosition": [2.5, 2.2, -1],
+          "cameraTarget": [0, 0.3, -3.5],
+          "durationMs": 4000
+        },
+        {
+          "id": "step-ls-3",
+          "hotspotId": "hs-living-sofa",
+          "narration": "沙发底部 ≥15cm 留空，扫地机器人自由通行；抱枕 2:1:2 比例平衡视觉。",
+          "cameraPosition": [2, 2.5, 0.5],
+          "cameraTarget": [0, 0.8, -2],
+          "durationMs": 4000
+        },
+        {
+          "id": "step-ls-4",
+          "hotspotId": "hs-living-bookshelf",
+          "narration": "侧旁书架：常用平视层、次常用下层、收藏上层；每 3~4 层点缀摆件不显压抑。",
+          "cameraPosition": [4.5, 2.5, -3],
+          "cameraTarget": [2.8, 1.5, -5],
+          "durationMs": 4000
+        }
+      ]
+    },
+    {
+      "id": "tour-kitchen-triangle",
+      "name": "厨房黄金三角",
+      "summary": "冰箱 → 水槽/操作台 → 灶台的高效动线与分区收纳。",
+      "icon": "🍳",
+      "steps": [
+        {
+          "id": "step-kt-1",
+          "hotspotId": "hs-kitchen-fridge",
+          "narration": "动线起点：冰箱两侧各留 ≥5cm 散热，生熟分区存放，门体搁架只放调味品。",
+          "cameraPosition": [4, 2, 2],
+          "cameraTarget": [6.2, 1.2, -0.5],
+          "durationMs": 4000
+        },
+        {
+          "id": "step-kt-2",
+          "hotspotId": "hs-kitchen-counter",
+          "narration": "L 型操作台按冰箱→水槽→灶台布局，总动线 ≤6 米；吊柜下感应灯带消除手影。",
+          "cameraPosition": [3, 2, 0.5],
+          "cameraTarget": [4.5, 0.9, -2],
+          "durationMs": 5000
+        },
+        {
+          "id": "step-kt-3",
+          "hotspotId": "hs-living-coffee",
+          "narration": "厨房做完美食，回到客厅茶几享用——厨房到餐厅/客厅的动线也应顺畅无阻。",
+          "cameraPosition": [2, 2.5, -1],
+          "cameraTarget": [0, 0.3, -3.5],
+          "durationMs": 3500
+        }
+      ]
+    }
+  ]
+}
